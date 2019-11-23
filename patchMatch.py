@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 def patchMatch(inImg,srcImg,psz):
 	w = int((psz-1)/2)
 	max_iter = 4
+	inImg = inImg.astype(np.float64)
+	srcImg = srcImg.astype(np.float64)
 	i_size = inImg.shape[:2]
 	s_size  = srcImg.shape[:2]
 	inimgpad = np.pad(inImg,(w),'constant',constant_values=(np.nan))
@@ -52,7 +54,7 @@ def patchMatch(inImg,srcImg,psz):
 						offsets[ii,jj] = np.sum(temp**2)/len(temp)
 
 				radius = s_size[0]/4
-				alpha = .5
+				alpha = 0.5
 				Radius = np.round(radius*alpha**np.arange(0,(-np.floor(np.log(radius)/np.log(alpha)))))
 				lenRad = len(Radius)
 				iis_min = np.max([w,np.max(NNF[ii,jj,0]-Radius)])
@@ -73,7 +75,7 @@ def patchMatch(inImg,srcImg,psz):
 					if pic < temp1:
 						temp1 = pic
 						temp2 = iis[itr_rs]
-						temp2 = jjs[itr_rs]
+						temp3 = jjs[itr_rs]
 				
 				offsets[ii,jj] = temp1
 				NNF[ii,jj,0] = temp2
@@ -102,4 +104,8 @@ im1 = cv2.imread('a.png')
 im2 = cv2.imread('b.png')
 im1 = cv2.resize(im1, (int(im1.shape[0]/2),int(im1.shape[1]/2)))
 im2 = cv2.resize(im2, (int(im2.shape[0]/2),int(im2.shape[1]/2)))
+plt.figure()
+plt.imshow(cv2.cvtColor(im1.astype(np.uint8), cv2.COLOR_BGR2RGB))
+plt.show()	
+
 patchMatch(im1,im2,1)

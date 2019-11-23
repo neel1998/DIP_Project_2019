@@ -1,0 +1,29 @@
+<html>
+<head>
+	<title>Patchmatch Web App</title>
+</head>
+<style type="text/css">
+.header {
+  padding: 5px;
+  text-align: center;
+  background: #1abc9c;
+  color: white;
+  font-size: 20px;
+}
+</style>
+<body bgcolor="#cfc9c7">
+<div class="header">
+	<h1>Patchmatch</h1>
+</div>
+<!-- <input id="upload_file1" type="file" name="upload image 1" onchange="getFile1()" /> -->
+<form enctype="multipart/form-data" action="/upload1" method="post">
+    <input id="image-file" type="file" value="submit" />
+</form>
+</body>
+<script type="text/javascript">
+	function getFile1(){
+		var btn = document.getElementById('upload_file1');
+		console.log(btn.value);
+	}
+</script>
+</html>

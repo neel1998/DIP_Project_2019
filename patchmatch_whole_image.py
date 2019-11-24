@@ -29,13 +29,14 @@ def do_patches(nnf, inp1, inp2, siz):
 		for j in range(w, inp_shape[1] - w, siz):
 			x = nnf[0][i][j]
 			y = nnf[1][i][j]
-			# print(x, y, i, j, inp2.shape)
-			temp = inp2[x - w: x + w + 1, y - w: y + w + 1]
-			out[i - w: i + w + 1, j - w: j + w + 1] = temp
+			temp1 = inp2[x - w: x + w + 1, y - w: y + w + 1]
+			out[i - w: i + w + 1, j - w: j + w + 1] = temp1 
 	out = np.uint8(out)
 	return out
 
 def nearestnf(inp1, inp2, siz, iterations):
+	inp1 = np.array(inp1, np.float)
+	inp2 = np.array(inp2, np.float)
 	w = int((siz - 1) / 2)
 	inp_shape = np.shape(inp1)
 	old_sz = inp_shape
@@ -72,11 +73,23 @@ def nearestnf(inp1, inp2, siz, iterations):
 	print(np.linalg.norm(off))
 	iter1 = 1
 	iter2 = 1
+	
+	final = do_patches([outx, outy], inp1, inp2, siz)
+	final = final[:old_sz[0], :old_sz[1]]
+
+	plt.subplot(331)
+	plt.axis('off')
+	plt.imshow(final)
+	plt.title("Initial")
+
+	print(np.linalg.norm(off))
 	for itr in range(iterations):
 		if itr % 2 == 0:
+			tot = inp_shape[0] * inp_shape[1]
+			tot = int(tot / 4)
+			ctr = 0
 			for i in range(inp_shape[0]):
 				for j in range(inp_shape[1]):
-					# print("WOHOOOO")
 					# Propagation:
 					cur = off[i][j]
 					left = off[max(i - 1, 0)][j]
@@ -140,15 +153,31 @@ def nearestnf(inp1, inp2, siz, iterations):
 							outy[i][j] = random_y
 
 						radius *= alpha
+					ctr += 1
+					if ctr == tot and itr == 0:
+						plt.subplot(332)
+						plt.axis('off')
+						final = do_patches([outx, outy], inp1, inp2, siz)
+						final = final[:old_sz[0], :old_sz[1]]
+						plt.imshow(final)
+						plt.title("1 / 4 Iteration")
+					elif ctr == 3 * tot and itr == 0:
+						plt.subplot(333)
+						plt.axis('off')
+						final = do_patches([outx, outy], inp1, inp2, siz)
+						final = final[:old_sz[0], :old_sz[1]]
+						plt.imshow(final)
+						plt.title("3 / 4 Iteration")
 		else:
-			for i in range(inp_shape[0] - 1, -1, -1):
-				for j in range(inp_shape[1] - 1, -1, -1):
+			inp_s = [np.uint64(inp_shape[0] - 1), np.uint64(inp_shape[1] - 1)]
+			for i in range(inp_s[0], -1, -1):
+				for j in range(inp_s[1], -1, -1):
 					# Propagation:
 					cur = off[i][j]
-					right = off[max(i + 1, inp_shape[0] - 1)][j]
-					bottom = off[i][max(j + 1, inp_shape[1] - 1)]
+					right = off[min(i + 1, inp_s[0])][j]
+					bottom = off[i][min(j + 1, inp_s[1])]
 					mn = min(cur, right, bottom)
-					if mn == right:
+					if mn == right and cur != right:
 						x = outx[i + 1][j] - 1
 						y = outy[i + 1][j]
 						if x >= w and y >= w:
@@ -161,7 +190,7 @@ def nearestnf(inp1, inp2, siz, iterations):
 							temp = temp[~np.isnan(temp)]
 							temp2 = np.sum(temp ** 2) / len(temp)
 							off[i, j] = temp2
-					elif mn == bottom:
+					elif mn == bottom and cur != bottom:
 						x = outx[i][j - 1]
 						y = outy[i][j - 1] - 1
 						if x >= w and y >=  w:
@@ -207,10 +236,15 @@ def nearestnf(inp1, inp2, siz, iterations):
 
 						radius *= alpha
 
+		plt.subplot(3, 3, itr + 4)
+		plt.axis('off')
+		final = do_patches([outx, outy], inp1, inp2, siz)
+		final = final[:old_sz[0], :old_sz[1]]
+		plt.imshow(final)
+		plt.title("{} Iteration".format(itr + 1))				
 
-	print(np.linalg.norm(off))
+
 	final =  do_patches([outx, outy], inp1, inp2, siz)
-	print(old_sz)
 	final = final[:old_sz[0], :old_sz[1]]
 	return final
 	# for i in range(a.shape[0]):
@@ -228,17 +262,19 @@ crop_img2 = cv2.imread(sys.argv[2])
 crop_img1 = cv2.cvtColor(crop_img1, cv2.COLOR_BGR2RGB)
 crop_img2 = cv2.cvtColor(crop_img2, cv2.COLOR_BGR2RGB)
 immm1 = np.copy(crop_img1)
-# plt.imshow(immm1)
-# plt.show()
-# crop_img1 = np.double(crop_img1)
-# crop_img2 = np.double(crop_img2)
+
 im = nearestnf(crop_img1, crop_img2, int(sys.argv[3]), int(sys.argv[4]))
 
-# immm[rf[0][1]:rf[1][1], rf[0][0]:rf[1][0]] = im
-plt.subplot(1,3,1)
+plt.subplot(3,3,7)
+plt.axis('off')
 plt.imshow(immm1)
-plt.subplot(1,3,2)
+plt.title("Original Image")
+plt.subplot(3,3,8)
+plt.axis('off')
 plt.imshow(crop_img2)
-plt.subplot(1,3,3)
+plt.title("Reference Image")
+plt.subplot(3,3,9)
+plt.axis('off')
 plt.imshow(im)
+plt.title("Reconstructed Image")
 plt.show()

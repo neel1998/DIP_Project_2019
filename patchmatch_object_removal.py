@@ -38,6 +38,8 @@ def do_patches(nnf, inp1, inp2, siz):
 	
 
 def nearestnf(inp1, inp2, siz, iterations):
+	inp1 = np.array(inp1, np.float)
+	inp2 = np.array(inp2, np.float)
 	w = int((siz - 1) / 2)
 	inp_shape = np.shape(inp1)
 	old_sz = inp_shape
@@ -267,31 +269,31 @@ if __name__ == "__main__":
 	image = cv2.imread(sys.argv[2])
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 	immm1 = np.copy(image)
-	# clone = image.copy()
-	# cv2.namedWindow("image")
-	# cv2.setMouseCallback("image", shape_selection)
+	clone = image.copy()
+	cv2.namedWindow("image")
+	cv2.setMouseCallback("image", shape_selection)
 
-	# while True: 
-	# 	cv2.imshow("image", image) 
-	# 	key = cv2.waitKey(1) & 0xFF
+	while True: 
+		cv2.imshow("image", image) 
+		key = cv2.waitKey(1) & 0xFF
 
-	# 	if key == ord("r"): 
-	# 		image = clone.copy() 
+		if key == ord("r"): 
+			image = clone.copy() 
 
-	# 	elif key == ord("c"): 
-	# 		break
+		elif key == ord("c"): 
+			break
 
-	# if len(ref_point) == 2: 
-	# 	crop_img2 = clone[ref_point[0][1]:ref_point[1][1], ref_point[0][0]: 
-	# 														ref_point[1][0]] 
-	# 	cv2.imshow("crop_img", crop_img2)
-	# 	cv2.waitKey(0)
+	if len(ref_point) == 2: 
+		crop_img2 = clone[ref_point[0][1]:ref_point[1][1], ref_point[0][0]: 
+															ref_point[1][0]] 
+		cv2.imshow("crop_img", crop_img2)
+		cv2.waitKey(0)
 
-	# cv2.destroyAllWindows()
+	cv2.destroyAllWindows()
 
-	# crop_img1 = np.double(crop_img1)
-	# crop_img2 = np.double(crop_img2)
-	im = nearestnf(crop_img1, immm1, int(sys.argv[3]), int(sys.argv[4]))
+	crop_img1 = np.double(crop_img1)
+	crop_img2 = np.double(crop_img2)
+	im = nearestnf(crop_img1, crop_img2, int(sys.argv[3]), int(sys.argv[4]))
 
 	immm[rf[0][1]:rf[1][1], rf[0][0]:rf[1][0]] = im
 	name = './static/results/' + sys.argv[1].split("/")[-1].split(".")[0] + "_" + sys.argv[2].split("/")[-1].split(".")[0]	 + "_res.jpg"

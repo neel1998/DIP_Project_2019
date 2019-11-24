@@ -10,20 +10,67 @@
   color: white;
   font-size: 20px;
 }
+.imagebox{
+	border: 2px solid black;
+	margin: auto;
+	display: inline-block;
+	margin: 10px;
+	text-align: center;
+	padding: 10px;
+}
 </style>
 <body bgcolor="#cfc9c7">
 <div class="header">
 	<h1>Patchmatch</h1>
 </div>
+
+<div class="imagebox" style="float: left;">
+<h4><u>Upload Input Image</u></h4>
 <form enctype="multipart/form-data" action="/upload1" method="post">
     <input id="image-file" type="file" name = "file" />
-    <input type="submit" name="upload">
+    <br>
+    {% if files[0] != null %}
+    <img id="img1" src = {{ files[0] }} width=300></img>
+    {% endif %}
+    <br>
+    <input type="submit" name="upload" value="Upload">
 </form>
+</div>
+
+<div class="imagebox" style="float: left;">
+<h4><u>Upload Target Image</u></h4>
+<form enctype="multipart/form-data" action="/upload2" method="post">
+    <input id="image-file" type="file" name = "file" />
+    <br>
+    {% if files[1] != null %}
+    <img id="img1" src = {{ files[1] }} width=300></img>
+    {% endif %}
+    <br>
+    <input type="submit" name="upload" value="Upload">
+</form>
+</div>
+
+<form action="/get_results"  style="float: left;">
+	<input type="submit" value="Run" onclick="process()">
+</form>
+
+<div class="imagebox">
+<h4><u>Result</u></h4>
+{% if res != null %}
+<img id="img1" src = {{ res }} width=300></img>
+<script type="text/javascript">hide_process();</script>>
+{% endif %}
+</div>
+
+<br>
+<img src ='./static/processing.gif' id ="process_gif" style = "visibility: hidden;margin-left: auto;margin-right: auto;" width=50>
 </body>
 <script type="text/javascript">
-	function getFile1(){
-		var btn = document.getElementById('upload_file1');
-		console.log(btn.value);
+	function process() {
+		document.getElementById("process_gif").style.visibility = "visible";
+	}
+	function hide_process() {
+		document.getElementById("process_gif").style.visibility = "hidden";	
 	}
 </script>
 </html>

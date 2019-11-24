@@ -148,70 +148,73 @@ def nearestnf(inp1, inp2, siz, iterations):
 # 		print(b[i][j], end=' ')
 # 	print()
 # print("------")
+if __name__ == "__main__":
+	if len(sys.argv) != 5:
+		print("Please provide proper command line arguments")
+		exit(0)
 
-if len(sys.argv) != 5:
-	print("Please provide proper command line arguments")
-	exit(0)
+	image = cv2.imread(sys.argv[1])
+	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+	immm1 = np.copy(image)
+	immm = np.copy(image)
 
-image = cv2.imread(sys.argv[1])
-image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-immm1 = np.copy(image)
-immm = np.copy(image)
+	clone = image.copy()
+	cv2.namedWindow("image")
+	cv2.setMouseCallback("image", shape_selection)
 
-clone = image.copy()
-cv2.namedWindow("image")
-cv2.setMouseCallback("image", shape_selection)
+	while True: 
+		cv2.imshow("image", image) 
+		key = cv2.waitKey(1) & 0xFF
 
-while True: 
-	cv2.imshow("image", image) 
-	key = cv2.waitKey(1) & 0xFF
+		if key == ord("r"): 
+			image = clone.copy() 
 
-	if key == ord("r"): 
-		image = clone.copy() 
+		elif key == ord("c"): 
+			break
 
-	elif key == ord("c"): 
-		break
+	if len(ref_point) == 2: 
+		crop_img1 = clone[ref_point[0][1]:ref_point[1][1], ref_point[0][0]: 
+															ref_point[1][0]] 
+		cv2.imshow("crop_img", crop_img1)
+		cv2.waitKey(0)
 
-if len(ref_point) == 2: 
-	crop_img1 = clone[ref_point[0][1]:ref_point[1][1], ref_point[0][0]: 
-														ref_point[1][0]] 
-	cv2.imshow("crop_img", crop_img1)
-	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 
-cv2.destroyAllWindows()
+	rf = np.copy(np.array(ref_point))
+	image = cv2.imread(sys.argv[2])
+	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+	clone = image.copy()
+	cv2.namedWindow("image")
+	cv2.setMouseCallback("image", shape_selection)
 
-rf = np.copy(np.array(ref_point))
-image = cv2.imread(sys.argv[2])
-image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-clone = image.copy()
-cv2.namedWindow("image")
-cv2.setMouseCallback("image", shape_selection)
+	while True: 
+		cv2.imshow("image", image) 
+		key = cv2.waitKey(1) & 0xFF
 
-while True: 
-	cv2.imshow("image", image) 
-	key = cv2.waitKey(1) & 0xFF
+		if key == ord("r"): 
+			image = clone.copy() 
 
-	if key == ord("r"): 
-		image = clone.copy() 
+		elif key == ord("c"): 
+			break
 
-	elif key == ord("c"): 
-		break
+	if len(ref_point) == 2: 
+		crop_img2 = clone[ref_point[0][1]:ref_point[1][1], ref_point[0][0]: 
+															ref_point[1][0]] 
+		cv2.imshow("crop_img", crop_img2)
+		cv2.waitKey(0)
 
-if len(ref_point) == 2: 
-	crop_img2 = clone[ref_point[0][1]:ref_point[1][1], ref_point[0][0]: 
-														ref_point[1][0]] 
-	cv2.imshow("crop_img", crop_img2)
-	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 
-cv2.destroyAllWindows()
+	# crop_img1 = np.double(crop_img1)
+	# crop_img2 = np.double(crop_img2)
+	im = nearestnf(crop_img1, crop_img2, int(sys.argv[3]), int(sys.argv[4]))
 
-# crop_img1 = np.double(crop_img1)
-# crop_img2 = np.double(crop_img2)
-im = nearestnf(crop_img1, crop_img2, int(sys.argv[3]), int(sys.argv[4]))
-
-immm[rf[0][1]:rf[1][1], rf[0][0]:rf[1][0]] = im
-plt.subplot(1,2,1)
-plt.imshow(immm1)
-plt.subplot(1,2,2)
-plt.imshow(immm)
-plt.show()
+	immm[rf[0][1]:rf[1][1], rf[0][0]:rf[1][0]] = im
+	name = './static/results/' + sys.argv[1].split("/")[-1].split(".")[0] + "_" + sys.argv[2].split("/")[-1].split(".")[0]	 + "_res.jpg"
+	print(name)
+	cv2.imwrite(name, immm)
+	plt.subplot(1,2,1)
+	plt.imshow(immm1)
+	plt.subplot(1,2,2)
+	plt.imshow(immm)
+	plt.show()

@@ -24,6 +24,7 @@ We find the matching path by randomly selecting a path initially and imporvising
   - Numpy
   - Opencv-python
   - Matplotlib
+  - Flask
 
   All requirements are written in requirements.txt, to install these libraries run the following command:
 

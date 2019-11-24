@@ -20,7 +20,26 @@ We find the matching path by randomly selecting a path initially and imporvising
 
  After initialization, Propagation and Random Search steps are done in iteration one after other, like P1,S1,P2,S2,P3,S3....
 
- ### File Structure
+### Python Libraries Required
+  - Numpy
+  - Opencv-python
+  - Matplotlib
+
+  All requirements are written in requirements.txt, to install these libraries run the following command:
+
+  ```
+  foo@bar:~$ pip install -r requirements.txt
+  ```
+
+  For `Anaconda` users, run the following commands:
+  ```
+  foo@bar:~$ conda install -c anaconda numpy
+  foo@bar:~$ conda install -c anaconda opencv
+  foo@bar:~$ conda install -c conda-forge matplotlib
+  ```
+
+
+### File Structure
 
  There are two main files `patchmatch_whole_image.py` and `patchmatch_object_removal.py`.
 

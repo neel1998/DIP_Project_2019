@@ -39,6 +39,11 @@ We find the matching path by randomly selecting a path initially and imporvising
   foo@bar:~$ conda install -c conda-forge matplotlib
   ```
 
+### Other Requirements
+  - tkinter
+  ```
+  foo@bar:~$ sudo apt-get install python3-tk
+  ```
 
 ### File Structure
 

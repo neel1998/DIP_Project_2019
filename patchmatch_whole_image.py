@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import cv2
 import sys
 
-a = np.arange(10000, 10000 + 40000 * 3).reshape(200, 200, 3)
-b = np.arange(10000, 10000 + 40000 * 3).reshape(200, 200, 3)
-
+# coordinates of rectangle drawn on image
 ref_point = []
-crop = False
 
-def shape_selection(event, x, y, flags, param): 
-	global ref_point, crop 
+def shape_selection(event, x, y, flags, param):
+	'''
+	Function for drawing rectangle
+	'''
+	global ref_point
 
 	if event == cv2.EVENT_LBUTTONDOWN: 
 		ref_point = [(x, y)] 
@@ -21,43 +21,74 @@ def shape_selection(event, x, y, flags, param):
 		cv2.imshow("image", image)
 
 def do_patches(nnf, inp1, inp2, siz):
+	'''
+	Copy best matching patches to input image
+	nnf: Nearest neighbour field
+	inp1: Input image
+	inp2: Reference image
+	siz: Patch size
+	'''
 	inp_shape = inp1.shape
 	w = int((siz - 1) / 2)
 	out = np.zeros(inp_shape, np.float)
-	print(nnf[0].max(), nnf[1].min())
+
 	for i in range(w, inp_shape[0] - w, siz):
 		for j in range(w, inp_shape[1] - w, siz):
+			
 			x = nnf[0][i][j]
 			y = nnf[1][i][j]
-			temp1 = inp2[x - w: x + w + 1, y - w: y + w + 1]
-			out[i - w: i + w + 1, j - w: j + w + 1] = temp1 
+
+			temp = inp2[x - w: x + w + 1, y - w: y + w + 1]
+			out[i - w: i + w + 1, j - w: j + w + 1] = temp
+
 	out = np.uint8(out)
 	return out
+	
 
 def nearestnf(inp1, inp2, siz, iterations):
-	inp1 = np.array(inp1, np.float)
-	inp2 = np.array(inp2, np.float)
+	'''
+	This function computes nearest neighbour field followed by propagation and random search process.
+	inp1: Input image
+	inp2: Reference image
+	siz: Patch size
+	iterations: Number of iterations for which algorithm runs
+	'''
+
+	inp1, inp2 = np.array(inp1, np.float), np.array(inp2, np.float)
 	w = int((siz - 1) / 2)
+	
 	inp_shape = np.shape(inp1)
 	old_sz = inp_shape
+	
+	# create rectangle divisible by patch size
 	new_inp_shape = np.zeros(len(inp_shape))
 	new_inp_shape[0] = inp_shape[0] + siz - inp_shape[0] % siz
 	new_inp_shape[1] = inp_shape[1] + siz - inp_shape[1] % siz
+	
+	# preserve the 3rd dimension if colored image
 	for i in range(2, len(inp_shape)):
 		new_inp_shape[i] = inp_shape[i]
+	
 	new_inp_shape = np.uint(new_inp_shape)
+	
 	new_inp = np.zeros(new_inp_shape)
 	new_inp[:inp_shape[0], :inp_shape[1]] = inp1[:inp_shape[0], :inp_shape[1]]
 	new_inp = np.uint8(new_inp)
+	
 	inp1 = np.copy(new_inp)
 	inp_shape = new_inp_shape
 	ref_shape = np.shape(inp2)
+	
+	# outx if NNF containing x coordinates of reference image
 	outx = np.random.randint(w, ref_shape[0] - w, (inp_shape[0], inp_shape[1]))
+	# outy if NNF containing y coordinates of reference image
 	outy = np.random.randint(w, ref_shape[1] - w, (inp_shape[0], inp_shape[1]))
 	
-	pad_image = np.pad(inp1, ((w,w),(w,w),(0,0)), 'constant', constant_values=(np.nan, np.nan))
+	pad_image = np.pad(inp1, ((w,w),(w,w),(0,0)), 'constant', constant_values=(np.nan, np.nan)) # padded image
 
-	off = np.full((inp_shape[0], inp_shape[1]), np.inf)
+	off = np.full((inp_shape[0], inp_shape[1]), np.inf) # offset array which error metric between two patches
+	
+	#initial copmutation of offsets
 	for i in range(inp_shape[0]):
 		for j in range(inp_shape[1]):
 			x = outx[i, j]
@@ -69,37 +100,23 @@ def nearestnf(inp1, inp2, siz, iterations):
 			temp2 = np.sum(temp ** 2) / len(temp)
 			off[i, j] = temp2
 
-	print(outx, outy)
-	print(np.linalg.norm(off))
-	iter1 = 1
-	iter2 = 1
-	
-	final = do_patches([outx, outy], inp1, inp2, siz)
-	final = final[:old_sz[0], :old_sz[1]]
-
-	plt.subplot(331)
-	plt.axis('off')
-	plt.imshow(final)
-	plt.title("Initial")
-
-	print(np.linalg.norm(off))
 	for itr in range(iterations):
 		if itr % 2 == 0:
-			tot = inp_shape[0] * inp_shape[1]
-			tot = int(tot / 4)
-			ctr = 0
+			# Scan Order: Left to Right, Top to Bottom
+			print(inp_shape)
 			for i in range(inp_shape[0]):
 				for j in range(inp_shape[1]):
+
 					# Propagation:
-					cur = off[i][j]
-					left = off[max(i - 1, 0)][j]
-					top = off[i][max(j - 1, 0)]
-					mn = min(cur, left, top)
+					cur = off[i][j] #current patch
+					left = off[max(i - 1, 0)][j] # left patch
+					top = off[i][max(j - 1, 0)] # top patch
+					mn = min(cur, left, top) # best match patch from above three
+					
 					if mn == left:
 						x = outx[i - 1][j] + 1
 						y = outy[i - 1][j]
 						if x < ref_shape[0] - w and y < ref_shape[1] - w:
-							iter1 += 1
 							outx[i, j] = x
 							outy[i, j] = y
 							a = pad_image[i: i + siz, j: j + siz, :]
@@ -112,7 +129,6 @@ def nearestnf(inp1, inp2, siz, iterations):
 						x = outx[i][j - 1]
 						y = outy[i][j - 1] + 1
 						if x < ref_shape[0] - w and y < ref_shape[1] - w:
-							iter1 += 1
 							outx[i, j] = x
 							outy[i, j] = y
 							a = pad_image[i: i + siz, j: j + siz, :]
@@ -125,14 +141,13 @@ def nearestnf(inp1, inp2, siz, iterations):
 					# Random Search
 					alpha = 0.5
 					radius = np.min(ref_shape[:2]) * (alpha**2)
-					# print(radius)
+
 					x = outx[i][j]
 					y = outy[i][j]
+
 					while radius > 1:
 						x_min, x_max = max(x - radius, w), min(x + radius, ref_shape[0] - w - 1)
 						y_min, y_max = max(y - radius, w), min(y + radius, ref_shape[1] - w - 1)
-						# print(x_min, x_max)
-						# print(y_min, y_max)
 
 						random_x = np.random.randint(x_min, x_max)
 						random_y = np.random.randint(y_min, y_max)
@@ -144,44 +159,28 @@ def nearestnf(inp1, inp2, siz, iterations):
 						temp = temp[~np.isnan(temp)]
 						temp2 = np.sum(temp ** 2) / len(temp)
 						off_rs = temp2					
-						# print(off_rs)
+						
+						# update if better patch found
 						if off_rs < off[i, j]:
-							# print("RS")
-							iter2 += 1
 							off[i][j] = off_rs
 							outx[i][j] = random_x
 							outy[i][j] = random_y
 
 						radius *= alpha
-					ctr += 1
-					if ctr == tot and itr == 0:
-						plt.subplot(332)
-						plt.axis('off')
-						final = do_patches([outx, outy], inp1, inp2, siz)
-						final = final[:old_sz[0], :old_sz[1]]
-						plt.imshow(final)
-						plt.title("1 / 4 Iteration")
-					elif ctr == 3 * tot and itr == 0:
-						plt.subplot(333)
-						plt.axis('off')
-						final = do_patches([outx, outy], inp1, inp2, siz)
-						final = final[:old_sz[0], :old_sz[1]]
-						plt.imshow(final)
-						plt.title("3 / 4 Iteration")
 		else:
+			# Reverse Scan Order: Right to Left, Bottom to Top
 			inp_s = [np.uint64(inp_shape[0] - 1), np.uint64(inp_shape[1] - 1)]
 			for i in range(inp_s[0], -1, -1):
 				for j in range(inp_s[1], -1, -1):
 					# Propagation:
-					cur = off[i][j]
-					right = off[min(i + 1, inp_s[0])][j]
-					bottom = off[i][min(j + 1, inp_s[1])]
-					mn = min(cur, right, bottom)
+					cur = off[i][j] # current patch
+					right = off[min(i + 1, inp_s[0])][j] # right patch
+					bottom = off[i][min(j + 1, inp_s[1])] # bottom patch
+					mn = min(cur, right, bottom) # best of above three
 					if mn == right and cur != right:
 						x = outx[i + 1][j] - 1
 						y = outy[i + 1][j]
 						if x >= w and y >= w:
-							iter1 += 1
 							outx[i, j] = x
 							outy[i, j] = y
 							a = pad_image[i: i + siz, j: j + siz, :]
@@ -194,7 +193,6 @@ def nearestnf(inp1, inp2, siz, iterations):
 						x = outx[i][j - 1]
 						y = outy[i][j - 1] - 1
 						if x >= w and y >=  w:
-							iter1 += 1
 							outx[i, j] = x
 							outy[i, j] = y
 							a = pad_image[i: i + siz, j: j + siz, :]
@@ -207,14 +205,13 @@ def nearestnf(inp1, inp2, siz, iterations):
 					# Random Search
 					alpha = 0.5
 					radius = np.min(ref_shape[:2]) * (alpha**2)
-					# print(radius)
+
 					x = outx[i][j]
 					y = outy[i][j]
+
 					while radius > 1:
 						x_min, x_max = max(x - radius, w), min(x + radius, ref_shape[0] - w - 1)
 						y_min, y_max = max(y - radius, w), min(y + radius, ref_shape[1] - w - 1)
-						# print(x_min, x_max)
-						# print(y_min, y_max)
 
 						random_x = np.random.randint(x_min, x_max)
 						random_y = np.random.randint(y_min, y_max)
@@ -226,31 +223,19 @@ def nearestnf(inp1, inp2, siz, iterations):
 						temp = temp[~np.isnan(temp)]
 						temp2 = np.sum(temp ** 2) / len(temp)
 						off_rs = temp2					
-						# print(off_rs)
+						
+						# update if better patch found
 						if off_rs < off[i, j]:
-							# print("RS")
-							iter2 += 1
 							off[i][j] = off_rs
 							outx[i][j] = random_x
 							outy[i][j] = random_y
 
 						radius *= alpha
 
-		plt.subplot(3, 3, itr + 4)
-		plt.axis('off')
-		final = do_patches([outx, outy], inp1, inp2, siz)
-		final = final[:old_sz[0], :old_sz[1]]
-		plt.imshow(final)
-		plt.title("{} Iteration".format(itr + 1))				
-
-
+	# final image made by matching patches
 	final =  do_patches([outx, outy], inp1, inp2, siz)
 	final = final[:old_sz[0], :old_sz[1]]
 	return final
-	# for i in range(a.shape[0]):
-	# 	for j in range(a.shape[1]):
-	# 		print(a[i][j], end=' ')
-	# 	print()
 
 if len(sys.argv) != 5:
 	print("Please provide proper command line arguments")

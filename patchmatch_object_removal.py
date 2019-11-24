@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import sys
 
 a = np.arange(10000, 10000 + 40000 * 3).reshape(200, 200, 3)
 b = np.arange(10000, 10000 + 40000 * 3).reshape(200, 200, 3)
@@ -148,7 +149,11 @@ def nearestnf(inp1, inp2, siz, iterations):
 # 	print()
 # print("------")
 
-image = cv2.imread("test3.jpg")
+if len(sys.argv) != 5:
+	print("Please provide proper command line arguments")
+	exit(0)
+
+image = cv2.imread(sys.argv[1])
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 immm1 = np.copy(image)
 immm = np.copy(image)
@@ -176,7 +181,7 @@ if len(ref_point) == 2:
 cv2.destroyAllWindows()
 
 rf = np.copy(np.array(ref_point))
-image = cv2.imread("test1.jpg")
+image = cv2.imread(sys.argv[2])
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 clone = image.copy()
 cv2.namedWindow("image")
@@ -202,7 +207,7 @@ cv2.destroyAllWindows()
 
 # crop_img1 = np.double(crop_img1)
 # crop_img2 = np.double(crop_img2)
-im = nearestnf(crop_img1, crop_img2, 41, 5)
+im = nearestnf(crop_img1, crop_img2, int(sys.argv[3]), int(sys.argv[4]))
 
 immm[rf[0][1]:rf[1][1], rf[0][0]:rf[1][0]] = im
 plt.subplot(1,2,1)

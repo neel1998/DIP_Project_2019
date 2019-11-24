@@ -50,15 +50,18 @@ We find the matching path by randomly selecting a path initially and imporvising
  ```
 `patchmatch_object_removal.py` is an extension of the proposed algorithm to use it for object removal from images. To run this file execute the following command,
 
-  ```
+```
 foo@bar:~$ python3 patchmatch_object_removal.py <input_image> <target_image> <patch_size> <iterations>
 ```
+
 #### Steps:
   1. After executing the above command user will be shown the `input_image`.
-  2. User needs to draw a rectandle using mouse around the objects that is needed to be removed
-  3. After that user will be shown the `target_image`
-  4. User needs to draw rectangle around the area/texture with which the objects selected in the previous image needs to be replaced.
-  5. After this the algorithm will run and user will be shown the `input_image` after removing the selected objects as a final result.
+  2. User needs to draw a rectandle using mouse around the objects that is needed to be removed.
+  3. Press `c` to select the target image or `r` to redraw to rectagle. Press `q` is satisfied by cropped image.
+  4. After that user will be shown the `target_image`
+  5. User needs to draw rectangle around the area/texture with which the objects selected in the previous image needs to be replaced.
+  6. Repeat step `3` to get cropped image of target_image
+  7. After this the algorithm will run and user will be shown the `input_image` after removing the selected objects as a final result.
 
 ### Flask Application
 
@@ -71,7 +74,13 @@ foo@bar:~$ python3 app.py
  ```
 Then go to localhost to use the app.
 
+- Upload input image in the left box.
+- Upload refence image in the right box.
+- Press `run` button to get ouput. 
+
 ### Results
+  ![Whole image reconstructed](Results/Figure_1.png)
+  ![Object removal reconstructed](Results/Tractor.jpeg)
 
 
 ### Contributors

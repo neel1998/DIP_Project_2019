@@ -100,10 +100,22 @@ def nearestnf(inp1, inp2, siz, iterations):
 			temp2 = np.sum(temp ** 2) / len(temp)
 			off[i, j] = temp2
 
+	# Initial NNF
+	final = do_patches([outx, outy], inp1, inp2, siz)
+	final = final[:old_sz[0], :old_sz[1]]
+
+	plt.subplot(331)
+	plt.axis('off')
+	plt.imshow(final)
+	plt.title("Initial")
+
+
 	for itr in range(iterations):
 		if itr % 2 == 0:
+			tot = inp_shape[0] * inp_shape[1]
+			tot = int(tot / 4)
+			ctr = 0			
 			# Scan Order: Left to Right, Top to Bottom
-			print(inp_shape)
 			for i in range(inp_shape[0]):
 				for j in range(inp_shape[1]):
 
@@ -167,6 +179,23 @@ def nearestnf(inp1, inp2, siz, iterations):
 							outy[i][j] = random_y
 
 						radius *= alpha
+
+					# Various plots at 1/4th 3/4th iteration
+					ctr += 1
+					if ctr == tot and itr == 0:
+						plt.subplot(332)
+						plt.axis('off')
+						final = do_patches([outx, outy], inp1, inp2, siz)
+						final = final[:old_sz[0], :old_sz[1]]
+						plt.imshow(final)
+						plt.title("1 / 4 Iteration")
+					elif ctr == 3 * tot and itr == 0:
+						plt.subplot(333)
+						plt.axis('off')
+						final = do_patches([outx, outy], inp1, inp2, siz)
+						final = final[:old_sz[0], :old_sz[1]]
+						plt.imshow(final)
+						plt.title("3 / 4 Iteration")
 		else:
 			# Reverse Scan Order: Right to Left, Bottom to Top
 			inp_s = [np.uint64(inp_shape[0] - 1), np.uint64(inp_shape[1] - 1)]
@@ -232,6 +261,13 @@ def nearestnf(inp1, inp2, siz, iterations):
 
 						radius *= alpha
 
+		plt.subplot(3, 3, itr + 4)
+		plt.axis('off')
+		final = do_patches([outx, outy], inp1, inp2, siz)
+		final = final[:old_sz[0], :old_sz[1]]
+		plt.imshow(final)
+		plt.title("{} Iteration".format(itr + 1))					
+
 	# final image made by matching patches
 	final =  do_patches([outx, outy], inp1, inp2, siz)
 	final = final[:old_sz[0], :old_sz[1]]
@@ -241,22 +277,24 @@ if len(sys.argv) != 5:
 	print("Please provide proper command line arguments")
 	exit(0)
 
+# Input image
+input_img = cv2.imread(sys.argv[1])
+input_img = cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB)
+input_img_copy = np.copy(input_img)
 
-crop_img1 = cv2.imread(sys.argv[1])
-crop_img2 = cv2.imread(sys.argv[2])
-crop_img1 = cv2.cvtColor(crop_img1, cv2.COLOR_BGR2RGB)
-crop_img2 = cv2.cvtColor(crop_img2, cv2.COLOR_BGR2RGB)
-immm1 = np.copy(crop_img1)
+# Refernce image
+ref_img = cv2.imread(sys.argv[2])
+ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
 
-im = nearestnf(crop_img1, crop_img2, int(sys.argv[3]), int(sys.argv[4]))
+im = nearestnf(input_img, ref_img, int(sys.argv[3]), int(sys.argv[4]))
 
 plt.subplot(3,3,7)
 plt.axis('off')
-plt.imshow(immm1)
+plt.imshow(input_img_copy)
 plt.title("Original Image")
 plt.subplot(3,3,8)
 plt.axis('off')
-plt.imshow(crop_img2)
+plt.imshow(ref_img)
 plt.title("Reference Image")
 plt.subplot(3,3,9)
 plt.axis('off')

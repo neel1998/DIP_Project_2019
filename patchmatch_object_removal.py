@@ -103,7 +103,6 @@ def nearestnf(inp1, inp2, siz, iterations):
 	for itr in range(iterations):
 		if itr % 2 == 0:
 			# Scan Order: Left to Right, Top to Bottom
-			print(inp_shape)
 			for i in range(inp_shape[0]):
 				for j in range(inp_shape[1]):
 
@@ -243,7 +242,6 @@ if __name__ == "__main__":
 		exit(0)
 
 	image = cv2.imread(sys.argv[1])
-	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 	input_img = np.copy(image)
 	clone = image.copy()
 
@@ -275,7 +273,6 @@ if __name__ == "__main__":
 
 
 	image = cv2.imread(sys.argv[2])
-	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 	ref_img = np.copy(image)
 	clone = image.copy()
 
@@ -300,6 +297,12 @@ if __name__ == "__main__":
 
 	cv2.destroyAllWindows()
 
+	input_img = cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB)
+	ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
+
+	crop_img1 = cv2.cvtColor(crop_img1, cv2.COLOR_BGR2RGB)
+	crop_img2 = cv2.cvtColor(crop_img2, cv2.COLOR_BGR2RGB)
+
 	crop_img1 = np.double(crop_img1)
 	crop_img2 = np.double(crop_img2)
 	
@@ -311,7 +314,7 @@ if __name__ == "__main__":
 
 	name = './static/results/' + sys.argv[1].split("/")[-1].split(".")[0] + "_" + sys.argv[2].split("/")[-1].split(".")[0]	 + "_res.jpg"
 
-	cv2.imwrite(name,cv2.cvtColor(input_img, cv2.COLOR_RGBR2BGR))
+	cv2.imwrite(name,cv2.cvtColor(input_img, cv2.COLOR_RGB2BGR))
 	plt.subplot(1,2,1)
 	plt.imshow(ref_img)
 	plt.subplot(1,2,2)

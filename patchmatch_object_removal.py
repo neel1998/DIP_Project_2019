@@ -36,6 +36,7 @@ def do_patches(nnf, inp1, inp2, siz):
 	out = np.uint8(out)
 	return out
 	
+
 def nearestnf(inp1, inp2, siz, iterations):
 	w = int((siz - 1) / 2)
 	inp_shape = np.shape(inp1)
@@ -73,72 +74,142 @@ def nearestnf(inp1, inp2, siz, iterations):
 	print(np.linalg.norm(off))
 	iter1 = 1
 	iter2 = 1
-	for _ in range(iterations):
-		for i in range(inp_shape[0]):
-			for j in range(inp_shape[1]):
-				# Propagation:
-				cur = off[i][j]
-				left = off[max(i - 1, 0)][j]
-				top = off[i][max(j - 1, 0)]
-				mn = min(cur, left, top)
-				if mn == left:
-					x = outx[i - 1][j] + 1
-					y = outy[i - 1][j]
-					if x + 1 < ref_shape[0] - w and y < ref_shape[1] - w:
-						iter1 += 1
-						outx[i, j] = x
-						outy[i, j] = y
+	for itr in range(iterations):
+		if itr % 2 == 0:
+			print(inp_shape)
+			for i in range(inp_shape[0]):
+				for j in range(inp_shape[1]):
+					# print("WOHOOOO")
+					# Propagation:
+					cur = off[i][j]
+					left = off[max(i - 1, 0)][j]
+					top = off[i][max(j - 1, 0)]
+					mn = min(cur, left, top)
+					if mn == left:
+						x = outx[i - 1][j] + 1
+						y = outy[i - 1][j]
+						if x < ref_shape[0] - w and y < ref_shape[1] - w:
+							iter1 += 1
+							outx[i, j] = x
+							outy[i, j] = y
+							a = pad_image[i: i + siz, j: j + siz, :]
+							b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+							temp = a - b 
+							temp = temp[~np.isnan(temp)]
+							temp2 = np.sum(temp ** 2) / len(temp)
+							off[i, j] = temp2
+					elif mn == top:
+						x = outx[i][j - 1]
+						y = outy[i][j - 1] + 1
+						if x < ref_shape[0] - w and y < ref_shape[1] - w:
+							iter1 += 1
+							outx[i, j] = x
+							outy[i, j] = y
+							a = pad_image[i: i + siz, j: j + siz, :]
+							b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+							temp = a - b 
+							temp = temp[~np.isnan(temp)]
+							temp2 = np.sum(temp ** 2) / len(temp)
+							off[i, j] = temp2
+
+					# Random Search
+					alpha = 0.5
+					radius = np.min(ref_shape[:2]) * (alpha**2)
+					# print(radius)
+					x = outx[i][j]
+					y = outy[i][j]
+					while radius > 1:
+						x_min, x_max = max(x - radius, w), min(x + radius, ref_shape[0] - w - 1)
+						y_min, y_max = max(y - radius, w), min(y + radius, ref_shape[1] - w - 1)
+						# print(x_min, x_max)
+						# print(y_min, y_max)
+
+						random_x = np.random.randint(x_min, x_max)
+						random_y = np.random.randint(y_min, y_max)
+
+						#offset random search
 						a = pad_image[i: i + siz, j: j + siz, :]
-						b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+						b = inp2[random_x - w: random_x + w + 1, random_y - w: random_y + w + 1, :]
 						temp = a - b 
 						temp = temp[~np.isnan(temp)]
 						temp2 = np.sum(temp ** 2) / len(temp)
-						off[i, j] = temp2
-				elif mn == top:
-					x = outx[i][j - 1]
-					y = outy[i][j - 1] + 1
-					if x < ref_shape[0] - w and y + 1 < ref_shape[1] - w:
-						iter1 += 1
-						outx[i, j] = x
-						outy[i, j] = y
+						off_rs = temp2					
+						# print(off_rs)
+						if off_rs < off[i, j]:
+							# print("RS")
+							iter2 += 1
+							off[i][j] = off_rs
+							outx[i][j] = random_x
+							outy[i][j] = random_y
+
+						radius *= alpha
+		else:
+			inp_s = [np.uint64(inp_shape[0] - 1), np.uint64(inp_shape[1] - 1)]
+			for i in range(inp_s[0], -1, -1):
+				for j in range(inp_s[1], -1, -1):
+					# Propagation:
+					cur = off[i][j]
+					right = off[min(i + 1, inp_s[0])][j]
+					bottom = off[i][min(j + 1, inp_s[1])]
+					mn = min(cur, right, bottom)
+					if mn == right and cur != right:
+						x = outx[i + 1][j] - 1
+						y = outy[i + 1][j]
+						if x >= w and y >= w:
+							iter1 += 1
+							outx[i, j] = x
+							outy[i, j] = y
+							a = pad_image[i: i + siz, j: j + siz, :]
+							b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+							temp = a - b 
+							temp = temp[~np.isnan(temp)]
+							temp2 = np.sum(temp ** 2) / len(temp)
+							off[i, j] = temp2
+					elif mn == bottom and cur != bottom:
+						x = outx[i][j - 1]
+						y = outy[i][j - 1] - 1
+						if x >= w and y >=  w:
+							iter1 += 1
+							outx[i, j] = x
+							outy[i, j] = y
+							a = pad_image[i: i + siz, j: j + siz, :]
+							b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+							temp = a - b 
+							temp = temp[~np.isnan(temp)]
+							temp2 = np.sum(temp ** 2) / len(temp)
+							off[i, j] = temp2
+
+					# Random Search
+					alpha = 0.5
+					radius = np.min(ref_shape[:2]) * (alpha**2)
+					# print(radius)
+					x = outx[i][j]
+					y = outy[i][j]
+					while radius > 1:
+						x_min, x_max = max(x - radius, w), min(x + radius, ref_shape[0] - w - 1)
+						y_min, y_max = max(y - radius, w), min(y + radius, ref_shape[1] - w - 1)
+						# print(x_min, x_max)
+						# print(y_min, y_max)
+
+						random_x = np.random.randint(x_min, x_max)
+						random_y = np.random.randint(y_min, y_max)
+
+						#offset random search
 						a = pad_image[i: i + siz, j: j + siz, :]
-						b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+						b = inp2[random_x - w: random_x + w + 1, random_y - w: random_y + w + 1, :]
 						temp = a - b 
 						temp = temp[~np.isnan(temp)]
 						temp2 = np.sum(temp ** 2) / len(temp)
-						off[i, j] = temp2
+						off_rs = temp2					
+						# print(off_rs)
+						if off_rs < off[i, j]:
+							# print("RS")
+							iter2 += 1
+							off[i][j] = off_rs
+							outx[i][j] = random_x
+							outy[i][j] = random_y
 
-				# Random Search
-				alpha = 0.5
-				radius = np.min(ref_shape[:2]) * (alpha**2)
-				# print(radius)
-				x = outx[i][j]
-				y = outy[i][j]
-				while radius > 1:
-					x_min, x_max = max(x - radius, w), min(x + radius, ref_shape[0] - w)
-					y_min, y_max = max(y - radius, w), min(y + radius, ref_shape[1] - w)
-					# print(x_min, x_max)
-					# print(y_min, y_max)
-
-					random_x = np.random.randint(x_min, x_max)
-					random_y = np.random.randint(y_min, y_max)
-
-					#offset random search
-					a = pad_image[i: i + siz, j: j + siz, :]
-					b = inp2[random_x - w: random_x + w + 1, random_y - w: random_y + w + 1, :]
-					temp = a - b 
-					temp = temp[~np.isnan(temp)]
-					temp2 = np.sum(temp ** 2) / len(temp)
-					off_rs = temp2
-					# print(off_rs)
-					if off_rs < off[i, j]:
-						# print("RS")
-						iter2 += 1
-						off[i][j] = off_rs
-						outx[i][j] = random_x
-						outy[i][j] = random_y
-
-					radius *= alpha
+						radius *= alpha
 
 
 	print(np.linalg.norm(off))
@@ -168,7 +239,6 @@ if __name__ == "__main__":
 
 	image = cv2.imread(sys.argv[1])
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-	immm1 = np.copy(image)
 	immm = np.copy(image)
 
 	clone = image.copy()
@@ -196,31 +266,32 @@ if __name__ == "__main__":
 	rf = np.copy(np.array(ref_point))
 	image = cv2.imread(sys.argv[2])
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-	clone = image.copy()
-	cv2.namedWindow("image")
-	cv2.setMouseCallback("image", shape_selection)
+	immm1 = np.copy(image)
+	# clone = image.copy()
+	# cv2.namedWindow("image")
+	# cv2.setMouseCallback("image", shape_selection)
 
-	while True: 
-		cv2.imshow("image", image) 
-		key = cv2.waitKey(1) & 0xFF
+	# while True: 
+	# 	cv2.imshow("image", image) 
+	# 	key = cv2.waitKey(1) & 0xFF
 
-		if key == ord("r"): 
-			image = clone.copy() 
+	# 	if key == ord("r"): 
+	# 		image = clone.copy() 
 
-		elif key == ord("c"): 
-			break
+	# 	elif key == ord("c"): 
+	# 		break
 
-	if len(ref_point) == 2: 
-		crop_img2 = clone[ref_point[0][1]:ref_point[1][1], ref_point[0][0]: 
-															ref_point[1][0]] 
-		cv2.imshow("crop_img", crop_img2)
-		cv2.waitKey(0)
+	# if len(ref_point) == 2: 
+	# 	crop_img2 = clone[ref_point[0][1]:ref_point[1][1], ref_point[0][0]: 
+	# 														ref_point[1][0]] 
+	# 	cv2.imshow("crop_img", crop_img2)
+	# 	cv2.waitKey(0)
 
-	cv2.destroyAllWindows()
+	# cv2.destroyAllWindows()
 
 	# crop_img1 = np.double(crop_img1)
 	# crop_img2 = np.double(crop_img2)
-	im = nearestnf(crop_img1, crop_img2, int(sys.argv[3]), int(sys.argv[4]))
+	im = nearestnf(crop_img1, immm1, int(sys.argv[3]), int(sys.argv[4]))
 
 	immm[rf[0][1]:rf[1][1], rf[0][0]:rf[1][0]] = im
 	name = './static/results/' + sys.argv[1].split("/")[-1].split(".")[0] + "_" + sys.argv[2].split("/")[-1].split(".")[0]	 + "_res.jpg"

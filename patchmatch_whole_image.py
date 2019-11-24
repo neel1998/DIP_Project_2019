@@ -85,7 +85,7 @@ def nearestnf(inp1, inp2, siz, iterations):
 					if mn == left:
 						x = outx[i - 1][j] + 1
 						y = outy[i - 1][j]
-						if x + 1 < ref_shape[0] - w and y < ref_shape[1] - w:
+						if x < ref_shape[0] - w and y < ref_shape[1] - w:
 							iter1 += 1
 							outx[i, j] = x
 							outy[i, j] = y
@@ -98,7 +98,7 @@ def nearestnf(inp1, inp2, siz, iterations):
 					elif mn == top:
 						x = outx[i][j - 1]
 						y = outy[i][j - 1] + 1
-						if x < ref_shape[0] - w and y + 1 < ref_shape[1] - w:
+						if x < ref_shape[0] - w and y < ref_shape[1] - w:
 							iter1 += 1
 							outx[i, j] = x
 							outy[i, j] = y
@@ -147,11 +147,11 @@ def nearestnf(inp1, inp2, siz, iterations):
 					cur = off[i][j]
 					right = off[max(i + 1, inp_shape[0] - 1)][j]
 					bottom = off[i][max(j + 1, inp_shape[1] - 1)]
-					mn = min(cur, left, bottom)
-					if mn == left:
-						x = outx[i - 1][j] + 1
-						y = outy[i - 1][j]
-						if x + 1 < ref_shape[0] - w and y < ref_shape[1] - w:
+					mn = min(cur, right, bottom)
+					if mn == right:
+						x = outx[i + 1][j] - 1
+						y = outy[i + 1][j]
+						if x >= w and y >= w:
 							iter1 += 1
 							outx[i, j] = x
 							outy[i, j] = y
@@ -161,10 +161,10 @@ def nearestnf(inp1, inp2, siz, iterations):
 							temp = temp[~np.isnan(temp)]
 							temp2 = np.sum(temp ** 2) / len(temp)
 							off[i, j] = temp2
-					elif mn == top:
+					elif mn == bottom:
 						x = outx[i][j - 1]
-						y = outy[i][j - 1] + 1
-						if x < ref_shape[0] - w and y + 1 < ref_shape[1] - w:
+						y = outy[i][j - 1] - 1
+						if x >= w and y >=  w:
 							iter1 += 1
 							outx[i, j] = x
 							outy[i, j] = y

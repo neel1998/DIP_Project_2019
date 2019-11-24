@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import sys
+import time
 
 a = np.arange(10000, 10000 + 40000 * 3).reshape(200, 200, 3)
 b = np.arange(10000, 10000 + 40000 * 3).reshape(200, 200, 3)
@@ -35,16 +36,6 @@ def do_patches(nnf, inp1, inp2, siz):
 	out = np.uint8(out)
 	return out
 	
-def lnorm(idx1 , pad_image, inp2, siz, idx2):
-	w = int((siz - 1) / 2)
-	i, j = idx1
-	ii, jj = idx2
-	a = pad_image[i: i + siz, j: j + siz, :]
-	b = inp2[ii - w: ii + w + 1, jj - w: jj + w + 1, :]
-	temp = a - b 
-	temp = temp[~np.isnan(temp)]
-	return np.sum(temp ** 2) / len(temp)
-
 def nearestnf(inp1, inp2, siz, iterations):
 	w = int((siz - 1) / 2)
 	inp_shape = np.shape(inp1)
@@ -69,7 +60,14 @@ def nearestnf(inp1, inp2, siz, iterations):
 	off = np.full((inp_shape[0], inp_shape[1]), np.inf)
 	for i in range(inp_shape[0]):
 		for j in range(inp_shape[1]):
-			off[i, j] = lnorm([i, j] , pad_image, inp2, siz, [ outx[i, j], outy[i,j] ])
+			x = outx[i, j]
+			y = outy[i, j]
+			a = pad_image[i: i + siz, j: j + siz, :]
+			b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+			temp = a - b 
+			temp = temp[~np.isnan(temp)]
+			temp2 = np.sum(temp ** 2) / len(temp)
+			off[i, j] = temp2
 
 	print(outx, outy)
 	print(np.linalg.norm(off))
@@ -78,7 +76,6 @@ def nearestnf(inp1, inp2, siz, iterations):
 	for _ in range(iterations):
 		for i in range(inp_shape[0]):
 			for j in range(inp_shape[1]):
-				# print("WOHOOOO")
 				# Propagation:
 				cur = off[i][j]
 				left = off[max(i - 1, 0)][j]
@@ -91,7 +88,12 @@ def nearestnf(inp1, inp2, siz, iterations):
 						iter1 += 1
 						outx[i, j] = x
 						outy[i, j] = y
-						off[i, j] = lnorm([i, j] , pad_image, inp2, siz, [ outx[i, j], outy[i,j] ])
+						a = pad_image[i: i + siz, j: j + siz, :]
+						b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+						temp = a - b 
+						temp = temp[~np.isnan(temp)]
+						temp2 = np.sum(temp ** 2) / len(temp)
+						off[i, j] = temp2
 				elif mn == top:
 					x = outx[i][j - 1]
 					y = outy[i][j - 1] + 1
@@ -99,7 +101,12 @@ def nearestnf(inp1, inp2, siz, iterations):
 						iter1 += 1
 						outx[i, j] = x
 						outy[i, j] = y
-						off[i, j] = lnorm([i, j] , pad_image, inp2, siz, [ outx[i, j], outy[i,j] ])
+						a = pad_image[i: i + siz, j: j + siz, :]
+						b = inp2[x - w: x + w + 1, y - w: y + w + 1, :]
+						temp = a - b 
+						temp = temp[~np.isnan(temp)]
+						temp2 = np.sum(temp ** 2) / len(temp)
+						off[i, j] = temp2
 
 				# Random Search
 				alpha = 0.5
@@ -117,7 +124,12 @@ def nearestnf(inp1, inp2, siz, iterations):
 					random_y = np.random.randint(y_min, y_max)
 
 					#offset random search
-					off_rs = lnorm([i, j], pad_image, inp2, siz, [random_x, random_y])
+					a = pad_image[i: i + siz, j: j + siz, :]
+					b = inp2[random_x - w: random_x + w + 1, random_y - w: random_y + w + 1, :]
+					temp = a - b 
+					temp = temp[~np.isnan(temp)]
+					temp2 = np.sum(temp ** 2) / len(temp)
+					off_rs = temp2
 					# print(off_rs)
 					if off_rs < off[i, j]:
 						# print("RS")
@@ -127,6 +139,7 @@ def nearestnf(inp1, inp2, siz, iterations):
 						outy[i][j] = random_y
 
 					radius *= alpha
+
 
 	print(np.linalg.norm(off))
 	final =  do_patches([outx, outy], inp1, inp2, siz)

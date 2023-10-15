@@ -5,7 +5,7 @@ As a part of Digital Image Processing course in this project we tried to impleme
 
 The patchmatch algorithm used in this project is based on Approximate Nearesrt Neighbour Field (NNF) method.
 
-We find the matching path by randomly selecting a path initially and imporvising the match throughout the ourse of the algorithm. The algorithm consists of 3 major steps:
+We find the matching path by randomly selecting a path initially and imporvising the match throughout the course of the algorithm. The algorithm consists of 3 major steps:
 
 1. <b>Intialization</b>
 
